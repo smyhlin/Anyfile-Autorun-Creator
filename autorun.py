@@ -1,10 +1,9 @@
 import getpass
 import os
 import platform
-from re import S
 import subprocess
-from tkinter import Frame, IntVar, Radiobutton, Tk, Button, Label, Entry, END, NORMAL, Menu
-from tkinter import filedialog, messagebox
+from tkinter import Frame, IntVar, Tk, END, NORMAL
+from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
 
 
 class App(Frame):
@@ -14,6 +13,7 @@ class App(Frame):
         self.initUI()
         self.centerWindow()
         self.USER_NAME = getpass.getuser()
+        self.autorun_type_variable = 1
         self.ps1 = """function jumpReg ($registryPath)
                         {
                             New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit" `
@@ -42,7 +42,6 @@ class App(Frame):
         self.master.title("Anyfile Autorun Creator")
         self.columnconfigure(0)
         self.rowconfigure(0)
-        self.autorun_type_variable = 1
         self.initMenuBar()
         self.initTextElements()
         self.initButtons()
@@ -148,7 +147,7 @@ class App(Frame):
                            font=('Helvetica 13 bold'),
                            command=self.select_radio_button)
         btn4.grid(row=6, column=1, sticky=b_sticky)
-    
+
     def select_radio_button(self):
         self.autorun_type_variable = self.autorun_type.get()
 
@@ -192,7 +191,8 @@ class App(Frame):
 
             # Open file or directory by path
             path = os.path.normpath(autorun_folder)
-            FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+            FILEBROWSER_PATH = os.path.join(
+                os.getenv('WINDIR'), 'explorer.exe')
 
             if os.path.isdir(path):
                 subprocess.run([FILEBROWSER_PATH, path])
@@ -201,34 +201,34 @@ class App(Frame):
 
     def add_to_startup(self):
         if platform.system() == "Windows":
-            match self.autorun_type_variable:
-                case 1: # Autorun folder
-                    file_path = self.file_path
-                    bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
-                    autorun_filename = self.entry.get()
-                    if autorun_filename == 'Your custom file name':
-                        autorun_filename = file_path.split('/')[-1]
+            if self.file_path:
+                match self.autorun_type_variable:
+                    case 1:  # Autorun folder
+                        bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
+                        autorun_filename = self.entry.get()
+                        if autorun_filename == 'Your custom file name':
+                            autorun_filename = self.file_path.split('/')[-1]
 
-                    new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
-                    user_answer = 'yes'
-                    if os.path.exists(new_file):
-                        user_answer = messagebox.askquestion(
-                            'File exists!', 'Do you want to rewrite it?')
-                        print(user_answer)
+                        new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
+                        user_answer = 'yes'
+                        if os.path.exists(new_file):
+                            user_answer = messagebox.askquestion(
+                                'File exists!', 'Do you want to rewrite it?')
 
-                    if user_answer == 'yes':
-                        with open(new_file, "w+") as bat_file:
-                            if '.py' in self.file_path:
-                                bat_file.write(fr'start pythonw "{file_path}"')
-                            else:
-                                bat_file.write(fr'start "{file_path}"')
-                        messagebox.showinfo('Done!', 'Done!')
-                    else:
-                        messagebox.showinfo('To Do:', 'Then enter custom name!')
-                case 2: # Autorun sheduler
-                    print('Not Implemented')
-                case 3: # Autorun registry
-                    print('Not Implemented')
+                        if user_answer == 'yes':
+                            with open(new_file, "w+") as bat_file:
+                                if '.py' in self.file_path:
+                                    bat_file.write(fr'start pythonw "{self.file_path}"')
+                                else:
+                                    bat_file.write(fr'start "{self.file_path}"')
+                            messagebox.showinfo('Done!', 'Done!')
+                        else:
+                            messagebox.showinfo(
+                                'To Do:', 'Then enter custom name!')
+                    case 2:  # Autorun sheduler
+                        print('Not Implemented')
+                    case 3:  # Autorun registry
+                        print('Not Implemented')
 
 
 def main():
