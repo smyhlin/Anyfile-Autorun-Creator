@@ -1,8 +1,9 @@
 import getpass
 import os
 import platform
+from re import S
 import subprocess
-from tkinter import Frame, Tk, Button, Label, Entry, END, NORMAL, Menu
+from tkinter import Frame, IntVar, Radiobutton, Tk, Button, Label, Entry, END, NORMAL, Menu
 from tkinter import filedialog, messagebox
 
 
@@ -25,8 +26,8 @@ class App(Frame):
                         }"""
 
     def centerWindow(self):
-        w = 381
-        h = 236
+        w = 441
+        h = 177
 
         sw = self.parent.winfo_screenwidth()
         sh = self.parent.winfo_screenheight()
@@ -41,6 +42,7 @@ class App(Frame):
         self.master.title("Anyfile Autorun Creator")
         self.columnconfigure(0)
         self.rowconfigure(0)
+        self.autorun_type_variable = 1
         self.initMenuBar()
         self.initTextElements()
         self.initButtons()
@@ -48,7 +50,8 @@ class App(Frame):
     def initMenuBar(self):
         menubar = Menu(self.parent)
         self.parent.config(menu=menubar)
-        file_menu = Menu(menubar, tearoff=False,background='#0e1621', foreground='#6d7883', activebackground='white', activeforeground='black')
+        file_menu = Menu(menubar, tearoff=False, background='#0e1621',
+                         foreground='#6d7883', activebackground='white', activeforeground='black')
 
         menubar.add_cascade(label="Open",
                             menu=file_menu
@@ -84,12 +87,20 @@ class App(Frame):
                     font=('Helvetica 13 bold'))
         lbl.grid(row=0, column=1)
 
+        lb2 = Label(self.parent,
+                    text="Select autorun type:",
+                    bg='#0e1621', fg='#6d7883',
+                    font=('Helvetica 13 bold'))
+        lb2.grid(row=3, column=1, sticky='W')
+
         self.entry = Entry(self.parent,
                            relief='groove',
                            bg='#17212b',
-                           fg='#6d7883')
+                           fg='#6d7883',
+                           font=('Helvetica 13'))
         self.entry.insert(END, 'Your custom file name')
-        self.clicked = self.entry.bind('<Button-1>', self.on_click)
+        self.on_entry_clicked = self.entry.bind(
+            '<Button-1>', self.on_entry_click)
         self.entry.grid(row=0, column=2, pady=3, sticky='NSEW')
 
     def initButtons(self):
@@ -98,62 +109,48 @@ class App(Frame):
                       foreground='#17212b',
                       background='#5288c1',
                       relief='flat',
-                      command=self.on_autorun_folder_open)
+                      command=self.chose_file_to_autorun,
+                      font=('Helvetica 13')
+                      )
         btn1.grid(row=1, column=2, pady=2, sticky='NSEW')
 
-        btn2 = Button(self.parent,
-                      text="Go to autorun folder",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.open_autorun_folder)
-        btn2.grid(row=4, column=1, pady=2)
+        self.autorun_type = IntVar()
+        b_sticky = 'W'
+        btn2 = Radiobutton(self.parent,
+                           text="Autorun folder",
+                           foreground='#6d7883',
+                           background='#0e1621',
+                           relief='flat',
+                           variable=self.autorun_type,
+                           value=1,
+                           font=('Helvetica 13 bold'),
+                           command=self.select_radio_button)
+        btn2.grid(row=4, column=1, sticky=b_sticky)
 
-        btn3 = Button(self.parent,
-                      text="Open Task Scheduler",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.open_task_sheduler)
-        btn3.grid(row=5, column=1, pady=2)
+        btn3 = Radiobutton(self.parent,
+                           text="Task Scheduler",
+                           foreground='#6d7883',
+                           background='#0e1621',
+                           relief='flat',
+                           variable=self.autorun_type,
+                           value=2,
+                           font=('Helvetica 13 bold'),
+                           command=self.select_radio_button)
+        btn3.grid(row=5, column=1, sticky=b_sticky)
 
-        btn4 = Button(self.parent,
-                      text="regedit HKEY_LOCAL_MACHINE\...\Run",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.registry_run_local_machine_open)
-        btn4.grid(row=6, column=1, pady=2)
-
-        btn5 = Button(self.parent,
-                      text="regedit HKEY_LOCAL_MACHINE\...\RunOnce",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.registry_run_once_local_machine_open)
-        btn5.grid(row=7, column=1, pady=2)
-
-        btn6 = Button(self.parent,
-                      text="regedit HKEY_CURRENT_USER\...\Run",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.registry_run_local_user_open)
-        btn6.grid(row=8, column=1, pady=2)
-
-        btn7 = Button(self.parent,
-                      text="regedit HKEY_CURRENT_USER\...\RunOnce",
-                      width=34,
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.registry_run_once_local_user_open)
-        btn7.grid(row=9, column=1, pady=2)
+        btn4 = Radiobutton(self.parent,
+                           text="Registry",
+                           foreground='#6d7883',
+                           background='#0e1621',
+                           relief='flat',
+                           variable=self.autorun_type,
+                           value=3,
+                           font=('Helvetica 13 bold'),
+                           command=self.select_radio_button)
+        btn4.grid(row=6, column=1, sticky=b_sticky)
+    
+    def select_radio_button(self):
+        self.autorun_type_variable = self.autorun_type.get()
 
     def open_task_sheduler(self):
         os.system('taskschd.msc')
@@ -178,56 +175,60 @@ class App(Frame):
         hkey = f'jumpReg ("{hkey_run}")'
         subprocess.Popen(['powershell.exe', self.ps1 + hkey])
 
-    def on_click(self, event):
+    def on_entry_click(self, event):
         self.entry.configure(state=NORMAL)
         self.entry.delete(0, END)
-        self.entry.unbind('<Button-1>', self.clicked)
+        self.entry.unbind('<Button-1>', self.on_entry_clicked)
 
-    def on_autorun_folder_open(self):
+    def chose_file_to_autorun(self):
         ftypes = [('All files', '*')]
         dlg = filedialog.Open(self, filetypes=ftypes)
         self.file_path = dlg.show()
         self.add_to_startup()
 
-    def explore(self, path):
-        # explorer would choke on forward slashes
-        path = os.path.normpath(path)
-        FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
-
-        if os.path.isdir(path):
-            subprocess.run([FILEBROWSER_PATH, path])
-        elif os.path.isfile(path):
-            subprocess.run([FILEBROWSER_PATH, '/select,', path])
-
     def open_autorun_folder(self):
         if platform.system() == "Windows":
             autorun_folder = rf'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\.'
-            self.explore(autorun_folder)
+
+            # Open file or directory by path
+            path = os.path.normpath(autorun_folder)
+            FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+
+            if os.path.isdir(path):
+                subprocess.run([FILEBROWSER_PATH, path])
+            elif os.path.isfile(path):
+                subprocess.run([FILEBROWSER_PATH, '/select,', path])
 
     def add_to_startup(self):
         if platform.system() == "Windows":
-            file_path = self.file_path
-            bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
-            autorun_filename = self.entry.get()
-            if autorun_filename == 'Your custom file name':
-                autorun_filename = file_path.split('/')[-1]
+            match self.autorun_type_variable:
+                case 1: # Autorun folder
+                    file_path = self.file_path
+                    bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
+                    autorun_filename = self.entry.get()
+                    if autorun_filename == 'Your custom file name':
+                        autorun_filename = file_path.split('/')[-1]
 
-            new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
-            user_answer = 'yes'
-            if os.path.exists(new_file):
-                user_answer = messagebox.askquestion(
-                    'File exists!', 'Do you want to rewrite it?')
-                print(user_answer)
+                    new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
+                    user_answer = 'yes'
+                    if os.path.exists(new_file):
+                        user_answer = messagebox.askquestion(
+                            'File exists!', 'Do you want to rewrite it?')
+                        print(user_answer)
 
-            if user_answer == 'yes':
-                with open(new_file, "w+") as bat_file:
-                    if '.py' in self.file_path:
-                        bat_file.write(fr'start pythonw "{file_path}"')
+                    if user_answer == 'yes':
+                        with open(new_file, "w+") as bat_file:
+                            if '.py' in self.file_path:
+                                bat_file.write(fr'start pythonw "{file_path}"')
+                            else:
+                                bat_file.write(fr'start "{file_path}"')
+                        messagebox.showinfo('Done!', 'Done!')
                     else:
-                        bat_file.write(fr'start "{file_path}"')
-                messagebox.showinfo('Done!', 'Done!')
-            else:
-                messagebox.showinfo('To Do:', 'Then enter custom name!')
+                        messagebox.showinfo('To Do:', 'Then enter custom name!')
+                case 2: # Autorun sheduler
+                    print('Not Implemented')
+                case 3: # Autorun registry
+                    print('Not Implemented')
 
 
 def main():
