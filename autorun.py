@@ -2,7 +2,7 @@ import getpass
 import os
 import platform
 import subprocess
-from tkinter import Frame, Tk, Button, Label, Entry, END, NORMAL
+from tkinter import Frame, Tk, Button, Label, Entry, END, NORMAL, Menu
 from tkinter import filedialog, messagebox
 
 
@@ -38,12 +38,44 @@ class App(Frame):
     def initUI(self):
         self.parent.configure(background='#0e1621')
         self.parent.resizable(False, False)
-        self.master.title("Autorun creator")
+        self.master.title("Anyfile Autorun Creator")
         self.columnconfigure(0)
         self.rowconfigure(0)
-        
+        self.initMenuBar()
         self.initTextElements()
         self.initButtons()
+
+    def initMenuBar(self):
+        menubar = Menu(self.parent)
+        self.parent.config(menu=menubar)
+        file_menu = Menu(menubar, tearoff=False,background='#0e1621', foreground='#6d7883', activebackground='white', activeforeground='black')
+
+        menubar.add_cascade(label="Open",
+                            menu=file_menu
+                            )
+
+        file_menu.add_command(label='Open autorun folder',
+                              command=self.open_autorun_folder)
+        file_menu.add_separator()
+
+        file_menu.add_command(label='Open Task Scheduler',
+                              command=self.open_task_sheduler)
+        file_menu.add_separator()
+
+        file_menu.add_command(label='HKEY_LOCAL_MACHINE\...\Run',
+                              command=self.registry_run_local_machine_open)
+        file_menu.add_separator()
+
+        file_menu.add_command(label='HKEY_CURRENT_USER\...\Run',
+                              command=self.registry_run_local_user_open)
+        file_menu.add_separator()
+
+        file_menu.add_command(label='HKEY_LOCAL_MACHINE\...\RunOnce',
+                              command=self.registry_run_once_local_machine_open)
+        file_menu.add_separator()
+
+        file_menu.add_command(label='HKEY_CURRENT_USER\...\RunOnce',
+                              command=self.registry_run_once_local_user_open)
 
     def initTextElements(self):
         lbl = Label(self.parent,
@@ -59,68 +91,68 @@ class App(Frame):
         self.entry.insert(END, 'Your custom file name')
         self.clicked = self.entry.bind('<Button-1>', self.on_click)
         self.entry.grid(row=0, column=2, pady=3, sticky='NSEW')
-        
+
     def initButtons(self):
         btn1 = Button(self.parent,
-                     text="Chose file",
-                     foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.on_autorun_folder_open)
-        btn1.grid(row=1, column= 2, pady=2, sticky='NSEW')
+                      text="Chose file",
+                      foreground='#17212b',
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.on_autorun_folder_open)
+        btn1.grid(row=1, column=2, pady=2, sticky='NSEW')
 
         btn2 = Button(self.parent,
-                     text="Go to autorun folder",
+                      text="Go to autorun folder",
                       width=34,
                       foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.onFolderOpen)
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.open_autorun_folder)
         btn2.grid(row=4, column=1, pady=2)
 
         btn3 = Button(self.parent,
-                     text="Open Task Scheduler",
+                      text="Open Task Scheduler",
                       width=34,
                       foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.open_task_sheduler)
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.open_task_sheduler)
         btn3.grid(row=5, column=1, pady=2)
 
         btn4 = Button(self.parent,
-                     text="regedit HKEY_LOCAL_MACHINE\...\Run",
-                     width=34,
-                     foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.registry_run_local_machine_open)
+                      text="regedit HKEY_LOCAL_MACHINE\...\Run",
+                      width=34,
+                      foreground='#17212b',
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.registry_run_local_machine_open)
         btn4.grid(row=6, column=1, pady=2)
 
         btn5 = Button(self.parent,
-                     text="regedit HKEY_LOCAL_MACHINE\...\RunOnce",
+                      text="regedit HKEY_LOCAL_MACHINE\...\RunOnce",
                       width=34,
                       foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.registry_run_once_local_machine_open)
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.registry_run_once_local_machine_open)
         btn5.grid(row=7, column=1, pady=2)
 
         btn6 = Button(self.parent,
-                     text="regedit HKEY_CURRENT_USER\...\Run",
+                      text="regedit HKEY_CURRENT_USER\...\Run",
                       width=34,
                       foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.registry_run_local_user_open)
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.registry_run_local_user_open)
         btn6.grid(row=8, column=1, pady=2)
 
         btn7 = Button(self.parent,
-                     text="regedit HKEY_CURRENT_USER\...\RunOnce",
+                      text="regedit HKEY_CURRENT_USER\...\RunOnce",
                       width=34,
                       foreground='#17212b',
-                     background='#5288c1',
-                     relief='flat',
-                     command=self.registry_run_once_local_user_open)
+                      background='#5288c1',
+                      relief='flat',
+                      command=self.registry_run_once_local_user_open)
         btn7.grid(row=9, column=1, pady=2)
 
     def open_task_sheduler(self):
@@ -167,7 +199,7 @@ class App(Frame):
         elif os.path.isfile(path):
             subprocess.run([FILEBROWSER_PATH, '/select,', path])
 
-    def onFolderOpen(self):
+    def open_autorun_folder(self):
         if platform.system() == "Windows":
             autorun_folder = rf'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\.'
             self.explore(autorun_folder)
@@ -183,7 +215,8 @@ class App(Frame):
             new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
             user_answer = 'yes'
             if os.path.exists(new_file):
-                user_answer = messagebox.askquestion('File exists!', 'Do you want to rewrite it?')
+                user_answer = messagebox.askquestion(
+                    'File exists!', 'Do you want to rewrite it?')
                 print(user_answer)
 
             if user_answer == 'yes':
