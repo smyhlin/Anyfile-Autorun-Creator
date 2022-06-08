@@ -22,8 +22,6 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 
 > ⌛ Adding startup entries to the Task Scheduler
 
-> ⌛ Move transition buttons to menu bar
-
 > ⌛ Console only mode support 
 
 
