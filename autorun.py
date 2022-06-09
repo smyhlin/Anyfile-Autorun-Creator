@@ -5,6 +5,7 @@ import subprocess
 import winreg as reg
 from tkinter import Frame, IntVar, Tk, END, NORMAL
 from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
+import datetime
 
 
 class App(Frame):
@@ -13,6 +14,7 @@ class App(Frame):
         self.parent = parent
         self.initUI()
         self.centerWindow()
+        # self.parent.iconbitmap('icon.ico')
         self.USER_NAME = getpass.getuser()
         self.autorun_type_variable = 1
         self.ps1 = """function jumpReg ($registryPath)
@@ -236,10 +238,48 @@ class App(Frame):
             messagebox.showinfo(
                 'To Do:', 'Then enter custom name!')
     
-    def add_to_task_sheduler(self):
-        pass
+    def add_to_task_sheduler(self, autorun_filename):
+        import win32com.client
+        #define constants
+        
+        scheduler = win32com.client.Dispatch('Schedule.Service')
+        scheduler.Connect()
+        root_folder = scheduler.GetFolder('\\')
+        task_def = scheduler.NewTask(0)
+
+        # Create trigger
+        TASK_TRIGGER_LOGON = 9
+        trigger = task_def.Triggers.Create(TASK_TRIGGER_LOGON)
+        trigger.Id = "LogonTriggerId"
+        # trigger.UserId = os.environ.get('USERNAME') # Run for current user only
+
+        # Create action
+        TASK_ACTION_EXEC = 0
+        action = task_def.Actions.Create(TASK_ACTION_EXEC)
+        action.ID = 'Anyfile-Autorun-Creator'
+        action.Path = 'cmd.exe'
+        action.Arguments = 'start' + self.file_path
+
+        # Set parameters
+        task_def.RegistrationInfo.Description = autorun_filename
+        task_def.RegistrationInfo.Author = "Anyfile-Autorun-Creator"
+        task_def.Settings.Enabled = True
+        task_def.Settings.StopIfGoingOnBatteries = False
+        
+        # Register task
+        # If task already exists, it will be updated
+        TASK_CREATE_OR_UPDATE = 6
+        TASK_ON_LOGON = 3
+        root_folder.RegisterTaskDefinition(
+            autorun_filename,  # Task name
+            task_def,
+            TASK_CREATE_OR_UPDATE,
+            '',  # No user
+            '',  # No password
+            TASK_ON_LOGON)
+        messagebox.showinfo('Done!', 'Done!')
     
-    def add_to_autorun_registry(self, key_name):
+    def add_to_autorun_registry(self, autorun_filename):
         # key we want to change is HKEY_CURRENT_USER
         # key value is Software\Microsoft\Windows\CurrentVersion\Run
         key = reg.HKEY_CURRENT_USER
@@ -248,7 +288,7 @@ class App(Frame):
         # open the key to make changes to
         open = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
         # modify the opened key
-        reg.SetValueEx(open, key_name, 0, reg.REG_SZ, self.file_path)
+        reg.SetValueEx(open, autorun_filename, 0, reg.REG_SZ, self.file_path)
 
         # now close the opened key
         reg.CloseKey(open)
