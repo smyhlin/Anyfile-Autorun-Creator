@@ -17,6 +17,16 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
  - HKEY_CURRENT_USER\\...\\RunOnce
  - HKEY_LOCAL_MACHINE\\...\\RunOnce
 
+>Main window:
+<p align="center">
+<img src="https://telegra.ph/file/ed90783f64f34401f8382.png">
+</p>
+
+>Menubar:
+<p align="center">
+<img src="https://telegra.ph/file/b17634b9e311fe85bd35b.png">
+</p>
+
 #### ToDo:
 > ⌛ Adding startup entries to the registry
 
@@ -27,8 +37,7 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 
 ## Telegram Support:
 
-[![Channel](https://img.shields.io/badge/TG-Channel-30302f?style=flat&logo=telegram)](https://t.me/ZKSaji1)
-[![Group](https://img.shields.io/badge/TG-Group-30302f?style=flat&logo=telegram)](https://t.me/ZKSajiconversation)
+[![ME](https://img.shields.io/badge/TG-ME-30302f?style=flat&logo=telegram)](https://t.me/s_myhlin)
 
 #### LICENSE
 - GPLv3

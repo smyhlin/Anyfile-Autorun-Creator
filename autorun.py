@@ -2,6 +2,7 @@ import getpass
 import os
 import platform
 import subprocess
+import winreg as reg
 from tkinter import Frame, IntVar, Tk, END, NORMAL
 from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
 
@@ -125,7 +126,8 @@ class App(Frame):
                            font=('Helvetica 13 bold'),
                            command=self.select_radio_button)
         btn2.grid(row=4, column=1, sticky=b_sticky)
-
+        btn2.invoke()
+        
         btn3 = Radiobutton(self.parent,
                            text="Task Scheduler",
                            foreground='#6d7883',
@@ -202,34 +204,55 @@ class App(Frame):
     def add_to_startup(self):
         if platform.system() == "Windows":
             if self.file_path:
+                autorun_filename = self.entry.get()
+                if autorun_filename.endswith(('Your custom file name', '')):
+                    autorun_filename = self.file_path.split('/')[-1]
+
                 match self.autorun_type_variable:
                     case 1:  # Autorun folder
-                        bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
-                        autorun_filename = self.entry.get()
-                        if autorun_filename == 'Your custom file name':
-                            autorun_filename = self.file_path.split('/')[-1]
-
-                        new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
-                        user_answer = 'yes'
-                        if os.path.exists(new_file):
-                            user_answer = messagebox.askquestion(
-                                'File exists!', 'Do you want to rewrite it?')
-
-                        if user_answer == 'yes':
-                            with open(new_file, "w+") as bat_file:
-                                if '.py' in self.file_path:
-                                    bat_file.write(fr'start pythonw "{self.file_path}"')
-                                else:
-                                    bat_file.write(fr'start "{self.file_path}"')
-                            messagebox.showinfo('Done!', 'Done!')
-                        else:
-                            messagebox.showinfo(
-                                'To Do:', 'Then enter custom name!')
+                        self.add_to_autorun_folder(autorun_filename)
                     case 2:  # Autorun sheduler
-                        print('Not Implemented')
+                        self.add_to_task_sheduler(autorun_filename)
                     case 3:  # Autorun registry
-                        print('Not Implemented')
+                        self.add_to_autorun_registry(autorun_filename)
 
+    def add_to_autorun_folder(self, autorun_filename):
+        bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
+
+        new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
+        user_answer = 'yes'
+        if os.path.exists(new_file):
+            user_answer = messagebox.askquestion(
+                'File exists!', 'Do you want to rewrite it?')
+
+        if user_answer == 'yes':
+            with open(new_file, "w+") as bat_file:
+                if '.py' in self.file_path:
+                    bat_file.write(fr'start pythonw "{self.file_path}"')
+                else:
+                    bat_file.write(fr'start "{self.file_path}"')
+            messagebox.showinfo('Done!', 'Done!')
+        else:
+            messagebox.showinfo(
+                'To Do:', 'Then enter custom name!')
+    
+    def add_to_task_sheduler(self):
+        pass
+    
+    def add_to_autorun_registry(self, key_name):
+        # key we want to change is HKEY_CURRENT_USER
+        # key value is Software\Microsoft\Windows\CurrentVersion\Run
+        key = reg.HKEY_CURRENT_USER
+        key_value = "Software\Microsoft\Windows\CurrentVersion\Run"
+
+        # open the key to make changes to
+        open = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
+        # modify the opened key
+        reg.SetValueEx(open, key_name, 0, reg.REG_SZ, self.file_path)
+
+        # now close the opened key
+        reg.CloseKey(open)
+        messagebox.showinfo('Done!', 'Done!')
 
 def main():
     root = Tk()
