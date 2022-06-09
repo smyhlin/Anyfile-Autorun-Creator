@@ -2,10 +2,8 @@ import getpass
 import os
 import platform
 import subprocess
-import winreg as reg
 from tkinter import Frame, IntVar, Tk, END, NORMAL
 from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
-import datetime
 
 
 class App(Frame):
@@ -241,7 +239,7 @@ class App(Frame):
     def add_to_task_sheduler(self, autorun_filename):
         import win32com.client
         #define constants
-        
+
         scheduler = win32com.client.Dispatch('Schedule.Service')
         scheduler.Connect()
         root_folder = scheduler.GetFolder('\\')
@@ -280,24 +278,28 @@ class App(Frame):
         messagebox.showinfo('Done!', 'Done!')
     
     def add_to_autorun_registry(self, autorun_filename):
+        import winreg
         # key we want to change is HKEY_CURRENT_USER
         # key value is Software\Microsoft\Windows\CurrentVersion\Run
-        key = reg.HKEY_CURRENT_USER
+        key = winreg.HKEY_CURRENT_USER
         key_value = "Software\Microsoft\Windows\CurrentVersion\Run"
 
         # open the key to make changes to
-        open = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
+        open = winreg.OpenKey(key, key_value, 0, winreg.KEY_ALL_ACCESS)
         # modify the opened key
-        reg.SetValueEx(open, autorun_filename, 0, reg.REG_SZ, self.file_path)
+        winreg.SetValueEx(open, autorun_filename, 0, winreg.REG_SZ, self.file_path)
 
         # now close the opened key
-        reg.CloseKey(open)
+        winreg.CloseKey(open)
         messagebox.showinfo('Done!', 'Done!')
 
 def main():
-    root = Tk()
-    App(root)
-    root.mainloop()
+    try:
+        root = Tk()
+        App(root)
+        root.mainloop()
+    except:
+        pass
 
 
 if __name__ == '__main__':

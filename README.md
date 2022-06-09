@@ -10,6 +10,10 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 > ✅ Adding startup entries to the autorun folder:  
 <sub>Win + R</sub> <sub>shell:startup</sub>
 
+> ✅ Adding startup entries to the registry
+
+> ✅ Adding startup entries to the Task Scheduler
+
 > ✅ Quick transition to all kinds of autorun places:
  - Task Scheduler
  - HKEY_LOCAL_MACHINE\\...\\Run
@@ -28,11 +32,7 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 </p>
 
 #### ToDo:
-> ⌛ Adding startup entries to the registry
-
-> ⌛ Adding startup entries to the Task Scheduler
-
-> ⌛ Console only mode support 
+> TODO
 
 
 ## Telegram Support:
