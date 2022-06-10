@@ -58,7 +58,7 @@ class App(Frame):
                             )
 
         file_menu.add_command(label='Open autorun folder',
-                              command=self.open_autorun_folder)
+                              command=self.open_windows_autorun_folder)
         file_menu.add_separator()
 
         file_menu.add_command(label='Open Task Scheduler',
@@ -177,6 +177,7 @@ class App(Frame):
         subprocess.Popen(['powershell.exe', self.ps1 + hkey])
 
     def on_entry_click(self, event):
+        # Clear entry field from text when click on it
         self.entry.configure(state=NORMAL)
         self.entry.delete(0, END)
         self.entry.unbind('<Button-1>', self.on_entry_clicked)
@@ -187,7 +188,7 @@ class App(Frame):
         self.file_path = dlg.show()
         self.add_to_startup()
 
-    def open_autorun_folder(self):
+    def open_windows_autorun_folder(self):
         if platform.system() == "Windows":
             autorun_folder = rf'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\.'
 
@@ -216,10 +217,11 @@ class App(Frame):
             return False
 
     def add_to_startup(self):
+        # Function where we get valid file name|path and chose type of "autoruner" from radiobutton
         if platform.system() == "Windows":
             if self.file_path:
 
-                if ' ' in self.file_path:
+                if ' ' in self.file_path:  # Check for spaces in file name and replace with '_'
                     self.remove_spaces_from_filename()
                 else:
                     custom_autorun_filename = self.entry.get()
@@ -227,7 +229,7 @@ class App(Frame):
                         custom_autorun_filename = custom_autorun_filename.replace(
                             '', '_')
 
-                    if custom_autorun_filename.endswith(('Your custom file name', '')):
+                    if custom_autorun_filename.endswith(('Your custom file name', '')):  # When user not set custom_autorun_filename we took filename from system 
                         custom_autorun_filename = self.file_path.split('/')[-1]
 
                     match self.autorun_type_variable:
@@ -236,8 +238,9 @@ class App(Frame):
                         case 2:  # Autorun sheduler
                             self.add_to_task_sheduler(custom_autorun_filename)
                         case 3:  # Autorun registry
-                            self.add_to_autorun_registry(
-                                custom_autorun_filename)
+                            self.add_to_autorun_registry(custom_autorun_filename)
+        else:
+            print('Not realized')
 
     def add_to_autorun_folder(self, autorun_filename):
         bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
@@ -264,8 +267,8 @@ class App(Frame):
 
     def add_to_task_sheduler(self, autorun_filename):
         import win32com.client
+        
         # define constants
-
         scheduler = win32com.client.Dispatch('Schedule.Service')
         scheduler.Connect()
         root_folder = scheduler.GetFolder('\\')
