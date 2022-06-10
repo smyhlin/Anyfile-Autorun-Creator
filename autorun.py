@@ -1,12 +1,9 @@
 import getpass
-from msilib.schema import Directory
 import os
 import platform
 import subprocess
 from tkinter import Frame, IntVar, Tk, END, NORMAL
 from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
-
-from bson import encode
 
 
 class App(Frame):
@@ -221,9 +218,10 @@ class App(Frame):
     def add_to_startup(self):
         if platform.system() == "Windows":
             if self.file_path:
+
                 if ' ' in self.file_path:
-                    user_answer = self.remove_spaces_from_filename()
-                if user_answer:
+                    self.remove_spaces_from_filename()
+                else:
                     custom_autorun_filename = self.entry.get()
                     if ' ' in custom_autorun_filename:
                         custom_autorun_filename = custom_autorun_filename.replace(
@@ -251,7 +249,7 @@ class App(Frame):
                 'Autorun File exists!', 'Autorun File exists!\n\nDo you want to rewrite it?')
 
         if user_answer == 'yes':
-            with open(new_file, "w+") as bat_file:
+            with open(new_file, "w+", encoding='cp866') as bat_file:
                 if '.py' in self.file_path:
                     bat_file.write(fr'start pythonw "{self.file_path}"')
                 else:
