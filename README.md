@@ -32,10 +32,10 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 </p>
 
 
-#### Run/Build Instructions
+#### Run/Build Instructions:
 first install requirements.txt with pip  
 ```
-> pip install requirements.txt
+> pip install -r requirements.txt
 ```
 
 
