@@ -203,35 +203,35 @@ class App(Frame):
                 subprocess.run([FILEBROWSER_PATH, '/select,', path])
 
     def remove_spaces_from_filename(self):
-        user_answer = messagebox.askquestion(
-            "CMD won`t work with spaces!",
-            "CMD won`t work with spaces\n\nDo you want to rewrite file name?\n\n(spaces ' ' will replace with '_')")
+        user_answer = messagebox.askquestion("CMD won`t work with spaces!",
+                                             "CMD won`t work with spaces\n\nDo you want to rewrite file name?\n\n(spaces ' ' will replace with '_')")
 
         if user_answer == 'yes':
             os.rename(self.file_path, self.file_path.replace(' ', '_'))
             self.file_path = self.file_path.replace(' ', '_')
             return True
         else:
-            messagebox.showinfo(
-                'To Do:', 'Then chose another file!\n\n CMD won`t work with spaces')
+            messagebox.showinfo('To Do:', 
+                                'Then chose another file!\n\n CMD won`t work with spaces')
             return False
 
     def add_to_startup(self):
         # Function where we get valid file name|path and chose type of "autoruner" from radiobutton
         if platform.system() == "Windows":
             if self.file_path:
-
+                user_answer = True
                 if ' ' in self.file_path:  # Check for spaces in file name and replace with '_'
-                    self.remove_spaces_from_filename()
-                else:
+                    user_answer = self.remove_spaces_from_filename()
+
+                if user_answer:
+                    self.autorun_file_directory = "/".join(self.file_path.split("/")[:-1])
                     custom_autorun_filename = self.entry.get()
                     if ' ' in custom_autorun_filename:
-                        custom_autorun_filename = custom_autorun_filename.replace(
-                            '', '_')
+                        custom_autorun_filename = custom_autorun_filename.replace('', '_')
 
                     if custom_autorun_filename.endswith(('Your custom file name', '')):  # When user not set custom_autorun_filename we took filename from system 
                         custom_autorun_filename = self.file_path.split('/')[-1]
-
+                        
                     match self.autorun_type_variable:
                         case 1:  # Autorun folder
                             self.add_to_autorun_folder(custom_autorun_filename)
@@ -248,22 +248,18 @@ class App(Frame):
         new_file = bat_path + '\\' + f"{autorun_filename}_autorun.bat"
         user_answer = 'yes'
         if os.path.exists(new_file):
-            user_answer = messagebox.askquestion(
-                'Autorun File exists!', 'Autorun File exists!\n\nDo you want to rewrite it?')
+            user_answer = messagebox.askquestion('Autorun File exists!', 
+                                                 'Autorun File exists!\n\nDo you want to rewrite it?')
 
         if user_answer == 'yes':
             with open(new_file, "w+", encoding='cp866') as bat_file:
                 if '.py' in self.file_path:
                     bat_file.write(fr'start pythonw "{self.file_path}"')
                 else:
-                    autorun_file_directory = "/".join(
-                        self.file_path.split("/")[:-1])
-                    bat_file.write(
-                        fr'start /d "{autorun_file_directory}/" {autorun_filename}')
+                    bat_file.write(fr'start /d "{self.autorun_file_directory}/" {autorun_filename}  && Exit')
             messagebox.showinfo('Done!', 'Done!')
         else:
-            messagebox.showinfo(
-                'To Do:', 'Then enter custom name!')
+            messagebox.showinfo('To Do:', 'Then enter custom name!')
 
     def add_to_task_sheduler(self, autorun_filename):
         import win32com.client
@@ -285,7 +281,7 @@ class App(Frame):
         action = task_def.Actions.Create(TASK_ACTION_EXEC)
         action.ID = 'Anyfile-Autorun-Creator'
         action.Path = 'cmd.exe'
-        action.Arguments = 'start' + self.file_path
+        action.Arguments = f'/k start /d "{self.autorun_file_directory}/" {autorun_filename} && Exit'
 
         # Set parameters
         task_def.RegistrationInfo.Description = autorun_filename
@@ -317,7 +313,7 @@ class App(Frame):
         open = winreg.OpenKey(key, key_value, 0, winreg.KEY_ALL_ACCESS)
         # modify the opened key
         winreg.SetValueEx(open, autorun_filename, 0,
-                          winreg.REG_SZ, self.file_path)
+                          winreg.REG_SZ, f'cmd.exe /k start /d "{self.autorun_file_directory}/" {autorun_filename} && Exit')
 
         # now close the opened key
         winreg.CloseKey(open)
