@@ -1,9 +1,12 @@
 import getpass
+from msilib.schema import Directory
 import os
 import platform
 import subprocess
 from tkinter import Frame, IntVar, Tk, END, NORMAL
 from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
+
+from bson import encode
 
 
 class App(Frame):
@@ -127,7 +130,7 @@ class App(Frame):
                            command=self.select_radio_button)
         btn2.grid(row=4, column=1, sticky=b_sticky)
         btn2.invoke()
-        
+
         btn3 = Radiobutton(self.parent,
                            text="Task Scheduler",
                            foreground='#6d7883',
@@ -201,20 +204,42 @@ class App(Frame):
             elif os.path.isfile(path):
                 subprocess.run([FILEBROWSER_PATH, '/select,', path])
 
+    def remove_spaces_from_filename(self):
+        user_answer = messagebox.askquestion(
+            "CMD won`t work with spaces!",
+            "CMD won`t work with spaces\n\nDo you want to rewrite file name?\n\n(spaces ' ' will replace with '_')")
+
+        if user_answer == 'yes':
+            os.rename(self.file_path, self.file_path.replace(' ', '_'))
+            self.file_path = self.file_path.replace(' ', '_')
+            return True
+        else:
+            messagebox.showinfo(
+                'To Do:', 'Then chose another file!\n\n CMD won`t work with spaces')
+            return False
+
     def add_to_startup(self):
         if platform.system() == "Windows":
             if self.file_path:
-                autorun_filename = self.entry.get()
-                if autorun_filename.endswith(('Your custom file name', '')):
-                    autorun_filename = self.file_path.split('/')[-1]
+                if ' ' in self.file_path:
+                    user_answer = self.remove_spaces_from_filename()
+                if user_answer:
+                    custom_autorun_filename = self.entry.get()
+                    if ' ' in custom_autorun_filename:
+                        custom_autorun_filename = custom_autorun_filename.replace(
+                            '', '_')
 
-                match self.autorun_type_variable:
-                    case 1:  # Autorun folder
-                        self.add_to_autorun_folder(autorun_filename)
-                    case 2:  # Autorun sheduler
-                        self.add_to_task_sheduler(autorun_filename)
-                    case 3:  # Autorun registry
-                        self.add_to_autorun_registry(autorun_filename)
+                    if custom_autorun_filename.endswith(('Your custom file name', '')):
+                        custom_autorun_filename = self.file_path.split('/')[-1]
+
+                    match self.autorun_type_variable:
+                        case 1:  # Autorun folder
+                            self.add_to_autorun_folder(custom_autorun_filename)
+                        case 2:  # Autorun sheduler
+                            self.add_to_task_sheduler(custom_autorun_filename)
+                        case 3:  # Autorun registry
+                            self.add_to_autorun_registry(
+                                custom_autorun_filename)
 
     def add_to_autorun_folder(self, autorun_filename):
         bat_path = fr'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup'
@@ -223,22 +248,25 @@ class App(Frame):
         user_answer = 'yes'
         if os.path.exists(new_file):
             user_answer = messagebox.askquestion(
-                'File exists!', 'Do you want to rewrite it?')
+                'Autorun File exists!', 'Autorun File exists!\n\nDo you want to rewrite it?')
 
         if user_answer == 'yes':
             with open(new_file, "w+") as bat_file:
                 if '.py' in self.file_path:
                     bat_file.write(fr'start pythonw "{self.file_path}"')
                 else:
-                    bat_file.write(fr'start "{self.file_path}"')
+                    autorun_file_directory = "/".join(
+                        self.file_path.split("/")[:-1])
+                    bat_file.write(
+                        fr'start /d "{autorun_file_directory}/" {autorun_filename}')
             messagebox.showinfo('Done!', 'Done!')
         else:
             messagebox.showinfo(
                 'To Do:', 'Then enter custom name!')
-    
+
     def add_to_task_sheduler(self, autorun_filename):
         import win32com.client
-        #define constants
+        # define constants
 
         scheduler = win32com.client.Dispatch('Schedule.Service')
         scheduler.Connect()
@@ -263,7 +291,7 @@ class App(Frame):
         task_def.RegistrationInfo.Author = "Anyfile-Autorun-Creator"
         task_def.Settings.Enabled = True
         task_def.Settings.StopIfGoingOnBatteries = False
-        
+
         # Register task
         # If task already exists, it will be updated
         TASK_CREATE_OR_UPDATE = 6
@@ -276,7 +304,7 @@ class App(Frame):
             '',  # No password
             TASK_ON_LOGON)
         messagebox.showinfo('Done!', 'Done!')
-    
+
     def add_to_autorun_registry(self, autorun_filename):
         import winreg
         # key we want to change is HKEY_CURRENT_USER
@@ -287,11 +315,13 @@ class App(Frame):
         # open the key to make changes to
         open = winreg.OpenKey(key, key_value, 0, winreg.KEY_ALL_ACCESS)
         # modify the opened key
-        winreg.SetValueEx(open, autorun_filename, 0, winreg.REG_SZ, self.file_path)
+        winreg.SetValueEx(open, autorun_filename, 0,
+                          winreg.REG_SZ, self.file_path)
 
         # now close the opened key
         winreg.CloseKey(open)
         messagebox.showinfo('Done!', 'Done!')
+
 
 def main():
     try:
