@@ -31,6 +31,25 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
 <img src="https://telegra.ph/file/b17634b9e311fe85bd35b.png">
 </p>
 
+
+#### Run/Build Instructions
+first install requirements.txt with pip  
+```
+> pip install requirements.txt
+```
+
+
+Next, you can run `autorun.py`
+
+Or build the .exe file with the following command:
+```
+> pip install pyinstaller 
+> pyinstaller --onefile --noconsole autorun.py
+```
+The executable will be created in `dist` directory
+
+Or you can just download already built executable [here](https://github.com/smyhlin/Anyfile-Autorun-Creator/releases)
+
 #### ToDo:
 > TODO
 
