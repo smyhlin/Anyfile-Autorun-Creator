@@ -21,14 +21,14 @@ A utility for automatic creation Autorun files, as well as quickly moving to the
  - HKEY_CURRENT_USER\\...\\RunOnce
  - HKEY_LOCAL_MACHINE\\...\\RunOnce
 
->Main window:
+>Dark Mode:
 <p align="center">
-<img src="https://telegra.ph/file/ed90783f64f34401f8382.png">
+<img src="https://telegra.ph/file/c5743d5ec7a37a491aca7.png">
 </p>
 
->Menubar:
+>Light Mode:
 <p align="center">
-<img src="https://telegra.ph/file/b17634b9e311fe85bd35b.png">
+<img src="https://telegra.ph/file/d46a01d590a2ea2d140f2.png">
 </p>
 
 

@@ -2,20 +2,21 @@ import getpass
 import os
 import platform
 import subprocess
-from tkinter import Frame, IntVar, Tk, END, NORMAL
-from tkinter import filedialog, messagebox, Radiobutton, Button, Label, Entry, Menu
+import tkinter
+import tkinter.messagebox
+from tkinter import ttk, filedialog, messagebox
+import customtkinter
+
+customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 
-class App(Frame):
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
-        self.parent = parent
-        self.initUI()
-        self.centerWindow()
-        # self.parent.iconbitmap('icon.ico')
-        self.USER_NAME = getpass.getuser()
-        self.autorun_type_variable = 1
-        self.ps1 = """function jumpReg ($registryPath)
+class App(customtkinter.CTk):
+
+    WIDTH = 780
+    HEIGHT = 390
+    USER_NAME = getpass.getuser()
+    ps1 = """function jumpReg ($registryPath)
                         {
                             New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit" `
                                             -Name "LastKey" `
@@ -26,161 +27,219 @@ class App(Frame):
                             regedit
                         }"""
 
+    def __init__(self):
+        super().__init__()
+
+        self.title("Anyfile Autorun Creator")
+        self.centerWindow()
+        self.resizable(False, False)
+        self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)  # call .on_closing() when app gets closed
+
+        #! ============ create two frames ============
+
+        #! configure grid layout (2x1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self.frame_left = customtkinter.CTkFrame(master=self,
+                                                 width=180,
+                                                 corner_radius=0)
+        self.frame_left.grid(row=0, column=0, sticky="nswe")
+
+        self.frame_right = customtkinter.CTkFrame(master=self)
+        self.frame_right.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
+
+        #! ============ frame_left ============
+
+        #! configure grid layout (1x11)
+        self.frame_left.grid_rowconfigure(0, minsize=10)   # empty row with minsize as spacing
+        self.frame_left.grid_rowconfigure(8, weight=1)  # empty row as spacing
+        self.frame_left.grid_rowconfigure(8, minsize=20)    # empty row with minsize as spacing
+        self.frame_left.grid_rowconfigure(11, minsize=10)  # empty row with minsize as spacing
+
+        self.label_1 = customtkinter.CTkLabel(master=self.frame_left,
+                                              text="Autorun habitats",
+                                              text_font=("Roboto Medium", -16))  # font name and size in px
+        self.label_1.grid(row=1, column=0, pady=10, padx=10)
+
+        self.button_1 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="Autorun folder",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_windows_autorun_folder)
+        self.button_1.grid(row=2, column=0, pady=5, padx=20, sticky="we")
+
+        self.button_2 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="Task Scheduler",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_task_sheduler)
+        self.button_2.grid(row=3, column=0, pady=5, padx=20, sticky="we")
+
+        self.button_3 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="HKEY_LOCAL_MACHINE\...\Run",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_registry_run_local_machine)
+        self.button_3.grid(row=4, column=0, pady=5, padx=20, sticky="we")
+
+        self.button_4 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="HKEY_LOCAL_MACHINE\...\RunOnce",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_registry_run_once_local_machine)
+        self.button_4.grid(row=5, column=0, pady=5, padx=20, sticky="we")
+
+        self.button_5 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="HKEY_CURRENT_USER\...\Run",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_registry_run_current_user)
+        self.button_5.grid(row=6, column=0, pady=5, padx=20, sticky="we")
+        
+        self.button_6 = customtkinter.CTkButton(master=self.frame_left,
+                                                text="HKEY_CURRENT_USER\...\RunOnce",
+                                                fg_color=("gray75", "gray30"),  # <- custom tuple-color
+                                                command=self.open_registry_run_once_current_user)
+        self.button_6.grid(row=7, column=0, pady=5, padx=20, sticky="we")
+        
+        self.switch_1 = customtkinter.CTkSwitch(master=self.frame_left,
+                                                text="Auto-Replace spaces with '_'")
+        self.switch_1.grid(row=10, column=0, pady=10, padx=20, sticky="w")
+        
+        self.switch_2 = customtkinter.CTkSwitch(master=self.frame_left,
+                                                text="Dark Mode",
+                                                command=self.change_mode)
+        self.switch_2.grid(row=11, column=0, pady=10, padx=20, sticky="w")
+
+        #! ============ frame_right ============
+
+        #! configure grid layout (3x7)
+        self.frame_right.rowconfigure((0, 1, 2, 3), weight=1)
+        self.frame_right.rowconfigure(7, weight=20)
+        self.frame_right.columnconfigure((0, 1), weight=1)
+        self.frame_right.columnconfigure(2, weight=0)
+        self.frame_right.grid_rowconfigure(3, weight=100)  # empty row as spacing
+
+        
+        self.frame_info = customtkinter.CTkFrame(master=self.frame_right)
+        self.frame_info.grid(row=0, column=0, columnspan=2, rowspan=4, pady=20, padx=20, sticky="nsew")
+
+        #! ============ frame_info ============
+
+        #! configure grid layout (1x1)
+        self.frame_info.rowconfigure(0, weight=1)
+        self.frame_info.columnconfigure(0, weight=1)
+        self.frame_info.grid_rowconfigure(0, minsize=10)   # empty row with minsize as spacing
+        self.frame_info.grid_rowconfigure(8, weight=1)  # empty row as spacing
+        self.frame_info.grid_rowconfigure(8, minsize=20)    # empty row with minsize as spacing
+        self.frame_info.grid_rowconfigure(11, minsize=10)  # empty row with minsize as spacing
+
+        self.label_info_1 = customtkinter.CTkLabel(master=self.frame_info,
+                                                   text="Print custom autorun file name:",
+                                                   height=70,
+                                                   fg_color=("white", "gray38"),  # <- custom tuple-color
+                                                   text_font=("Roboto Medium", -14),
+                                                   justify=tkinter.LEFT)
+        self.label_info_1.grid(row=0, column=0, sticky="wesn", padx=15, pady=15)
+
+
+        self.entry = customtkinter.CTkEntry(master=self.frame_info,
+                                            width=120,
+                                            placeholder_text="Your custom file name")
+        self.entry.grid(row=10, column=0, pady=3, padx=20, sticky="we")
+
+        self.button_7 = customtkinter.CTkButton(master=self.frame_info,
+                                                text="Select File",
+                                                command=self.select_file_to_autorun)
+        self.button_7.grid(row=11, column=0, pady=3, padx=20, sticky="we")
+        separator = ttk.Separator(self.frame_info, orient='horizontal')
+        separator.grid(row=12, column=0, pady=20, padx=20, sticky="wesn")
+        #! ============ frame_right ============
+
+        self.radio_var = tkinter.IntVar(value=0)
+
+        self.label_radio_group = customtkinter.CTkLabel(master=self.frame_right,
+                                                        text="Select autorun type:",
+                                                        text_font=("Roboto Medium", -14))
+        self.label_radio_group.grid(row=0, column=2, columnspan=1, pady=20, padx=10, sticky="nw")
+
+        self.radio_button_1 = customtkinter.CTkRadioButton(master=self.frame_right,
+                                                           variable=self.radio_var,
+                                                           value=0,
+                                                           text="Autorun folder")
+        self.radio_button_1.grid(row=1, column=2, pady=3, padx=20, sticky="nw")
+
+        self.radio_button_2 = customtkinter.CTkRadioButton(master=self.frame_right,
+                                                           variable=self.radio_var,
+                                                           value=1,
+                                                           text="Task Scheduler")
+        self.radio_button_2.grid(row=2, column=2, pady=3, padx=20, sticky="nw")
+
+        self.radio_button_3 = customtkinter.CTkRadioButton(master=self.frame_right,
+                                                           variable=self.radio_var,
+                                                           value=2,
+                                                           text="Registry")
+        self.radio_button_3.grid(row=3, column=2, pady=3, padx=20, sticky="nw")
+
+        # set default values
+        self.radio_button_1.select()
+        self.switch_1.select()
+        self.switch_2.select()
+
     def centerWindow(self):
-        w = 441
-        h = 177
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
 
-        sw = self.parent.winfo_screenwidth()
-        sh = self.parent.winfo_screenheight()
+        x = (sw - App.WIDTH) / 2
+        y = (sh - App.HEIGHT) / 2
+        self.geometry('%dx%d+%d+%d' % (App.WIDTH, App.HEIGHT, x, y))
+        
+    def button_event(self):
+        print("Button pressed")
 
-        x = (sw - w) / 2
-        y = (sh - h) / 2
-        self.parent.geometry('%dx%d+%d+%d' % (w, h, x, y))
+    def change_mode(self):
+        if self.switch_2.get() == 1:
+            customtkinter.set_appearance_mode("dark")
+        else:
+            customtkinter.set_appearance_mode("light")
 
-    def initUI(self):
-        self.parent.configure(background='#0e1621')
-        self.parent.resizable(False, False)
-        self.master.title("Anyfile Autorun Creator")
-        self.columnconfigure(0)
-        self.rowconfigure(0)
-        self.initMenuBar()
-        self.initTextElements()
-        self.initButtons()
+    def remove_spaces_from_filename(self):
+        if self.switch_1.get() == 1:
+            os.rename(self.file_path, self.file_path.replace(' ', '_'))
+            self.file_path = self.file_path.replace(' ', '_')
+            return True
+        else:
+            messagebox.showinfo('To Do:', 
+                                'Enable Auto-Rename switch\n'
+                                'OR Chose another file!'
+                                '\n\n CMD won`t work with spaces in file name')
+            return False
 
-    def initMenuBar(self):
-        menubar = Menu(self.parent)
-        self.parent.config(menu=menubar)
-        file_menu = Menu(menubar, tearoff=False, background='#0e1621',
-                         foreground='#6d7883', activebackground='white', activeforeground='black')
-
-        menubar.add_cascade(label="Open",
-                            menu=file_menu
-                            )
-
-        file_menu.add_command(label='Open autorun folder',
-                              command=self.open_windows_autorun_folder)
-        file_menu.add_separator()
-
-        file_menu.add_command(label='Open Task Scheduler',
-                              command=self.open_task_sheduler)
-        file_menu.add_separator()
-
-        file_menu.add_command(label='HKEY_LOCAL_MACHINE\...\Run',
-                              command=self.registry_run_local_machine_open)
-        file_menu.add_separator()
-
-        file_menu.add_command(label='HKEY_CURRENT_USER\...\Run',
-                              command=self.registry_run_local_user_open)
-        file_menu.add_separator()
-
-        file_menu.add_command(label='HKEY_LOCAL_MACHINE\...\RunOnce',
-                              command=self.registry_run_once_local_machine_open)
-        file_menu.add_separator()
-
-        file_menu.add_command(label='HKEY_CURRENT_USER\...\RunOnce',
-                              command=self.registry_run_once_local_user_open)
-
-    def initTextElements(self):
-        lbl = Label(self.parent,
-                    text="Print custom autorun file name:",
-                    bg='#0e1621', fg='#6d7883',
-                    font=('Helvetica 13 bold'))
-        lbl.grid(row=0, column=1)
-
-        lb2 = Label(self.parent,
-                    text="Select autorun type:",
-                    bg='#0e1621', fg='#6d7883',
-                    font=('Helvetica 13 bold'))
-        lb2.grid(row=3, column=1, sticky='W')
-
-        self.entry = Entry(self.parent,
-                           relief='groove',
-                           bg='#17212b',
-                           fg='#6d7883',
-                           font=('Helvetica 13'))
-        self.entry.insert(END, 'Your custom file name')
-        self.on_entry_clicked = self.entry.bind(
-            '<Button-1>', self.on_entry_click)
-        self.entry.grid(row=0, column=2, pady=3, sticky='NSEW')
-
-    def initButtons(self):
-        btn1 = Button(self.parent,
-                      text="Chose file",
-                      foreground='#17212b',
-                      background='#5288c1',
-                      relief='flat',
-                      command=self.chose_file_to_autorun,
-                      font=('Helvetica 13')
-                      )
-        btn1.grid(row=1, column=2, pady=2, sticky='NSEW')
-
-        self.autorun_type = IntVar()
-        b_sticky = 'W'
-        btn2 = Radiobutton(self.parent,
-                           text="Autorun folder",
-                           foreground='#6d7883',
-                           background='#0e1621',
-                           relief='flat',
-                           variable=self.autorun_type,
-                           value=1,
-                           font=('Helvetica 13 bold'),
-                           command=self.select_radio_button)
-        btn2.grid(row=4, column=1, sticky=b_sticky)
-        btn2.invoke()
-
-        btn3 = Radiobutton(self.parent,
-                           text="Task Scheduler",
-                           foreground='#6d7883',
-                           background='#0e1621',
-                           relief='flat',
-                           variable=self.autorun_type,
-                           value=2,
-                           font=('Helvetica 13 bold'),
-                           command=self.select_radio_button)
-        btn3.grid(row=5, column=1, sticky=b_sticky)
-
-        btn4 = Radiobutton(self.parent,
-                           text="Registry",
-                           foreground='#6d7883',
-                           background='#0e1621',
-                           relief='flat',
-                           variable=self.autorun_type,
-                           value=3,
-                           font=('Helvetica 13 bold'),
-                           command=self.select_radio_button)
-        btn4.grid(row=6, column=1, sticky=b_sticky)
-
-    def select_radio_button(self):
-        self.autorun_type_variable = self.autorun_type.get()
+    def select_file_to_autorun(self):
+        ftypes = [('All files', '*')]
+        dlg = filedialog.Open(self, filetypes=ftypes)
+        self.file_path = dlg.show()
+        self.add_to_startup()
 
     def open_task_sheduler(self):
         os.system('taskschd.msc')
 
-    def registry_run_local_user_open(self):
+    def open_registry_run_current_user(self):
         hkey_run = 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run'
         hkey = f'jumpReg ("{hkey_run}")'
-        subprocess.Popen(['powershell.exe', self.ps1 + hkey])
+        subprocess.Popen(['powershell.exe', App.ps1 + hkey])
 
-    def registry_run_once_local_user_open(self):
+    def open_registry_run_once_current_user(self):
         hkey_run = 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce'
         hkey = f'jumpReg ("{hkey_run}")'
-        subprocess.Popen(['powershell.exe', self.ps1 + hkey])
+        subprocess.Popen(['powershell.exe', App.ps1 + hkey])
 
-    def registry_run_local_machine_open(self):
+    def open_registry_run_local_machine(self):
         hkey_run = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
         hkey = f'jumpReg ("{hkey_run}")'
-        subprocess.Popen(['powershell.exe', self.ps1 + hkey])
+        subprocess.Popen(['powershell.exe', App.ps1 + hkey])
 
-    def registry_run_once_local_machine_open(self):
+    def open_registry_run_once_local_machine(self):
         hkey_run = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
         hkey = f'jumpReg ("{hkey_run}")'
-        subprocess.Popen(['powershell.exe', self.ps1 + hkey])
-
-    def on_entry_click(self, event):
-        # Clear entry field from text when click on it
-        self.entry.configure(state=NORMAL)
-        self.entry.delete(0, END)
-        self.entry.unbind('<Button-1>', self.on_entry_clicked)
+        subprocess.Popen(['powershell.exe', App.ps1 + hkey])
 
     def chose_file_to_autorun(self):
         ftypes = [('All files', '*')]
@@ -202,19 +261,6 @@ class App(Frame):
             elif os.path.isfile(path):
                 subprocess.run([FILEBROWSER_PATH, '/select,', path])
 
-    def remove_spaces_from_filename(self):
-        user_answer = messagebox.askquestion("CMD won`t work with spaces!",
-                                             "CMD won`t work with spaces\n\nDo you want to rewrite file name?\n\n(spaces ' ' will replace with '_')")
-
-        if user_answer == 'yes':
-            os.rename(self.file_path, self.file_path.replace(' ', '_'))
-            self.file_path = self.file_path.replace(' ', '_')
-            return True
-        else:
-            messagebox.showinfo('To Do:', 
-                                'Then chose another file!\n\n CMD won`t work with spaces')
-            return False
-
     def add_to_startup(self):
         # Function where we get valid file name|path and chose type of "autoruner" from radiobutton
         if platform.system() == "Windows":
@@ -231,13 +277,13 @@ class App(Frame):
 
                     if custom_autorun_filename.endswith(('Your custom file name', '')):  # When user not set custom_autorun_filename we took filename from system 
                         custom_autorun_filename = self.file_path.split('/')[-1]
-                        
-                    match self.autorun_type_variable:
-                        case 1:  # Autorun folder
+
+                    match self.radio_var.get():
+                        case 0:  # Autorun folder
                             self.add_to_autorun_folder(custom_autorun_filename)
-                        case 2:  # Autorun sheduler
+                        case 1:  # Autorun sheduler
                             self.add_to_task_sheduler(custom_autorun_filename)
-                        case 3:  # Autorun registry
+                        case 2:  # Autorun registry
                             self.add_to_autorun_registry(custom_autorun_filename)
         else:
             print('Not realized')
@@ -318,16 +364,11 @@ class App(Frame):
         # now close the opened key
         winreg.CloseKey(open)
         messagebox.showinfo('Done!', 'Done!')
+        
+    def on_closing(self, event=0):
+        self.destroy()
 
 
-def main():
-    try:
-        root = Tk()
-        App(root)
-        root.mainloop()
-    except:
-        pass
-
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
