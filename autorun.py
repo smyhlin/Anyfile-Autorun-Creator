@@ -2,14 +2,13 @@ import getpass
 import os
 import platform
 import subprocess
+import sys
 import tkinter
 import tkinter.messagebox
 from tkinter import ttk, filedialog, messagebox
 import customtkinter
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
-
+#TODO: https://www.tutorialspoint.com/how-to-create-a-system-tray-icon-of-a-tkinter-application
 
 class App(customtkinter.CTk):
 
@@ -31,6 +30,9 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("Anyfile Autorun Creator")
+        app_path = getattr(sys, '_MEIPASS', os.getcwd())
+        self.iconbitmap(app_path+"/customtkinter/assets/icon.ico")
+        
         self.centerWindow()
         self.resizable(False, False)
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
@@ -138,7 +140,6 @@ class App(customtkinter.CTk):
                                                    text_font=("Roboto Medium", -14),
                                                    justify=tkinter.LEFT)
         self.label_info_1.grid(row=0, column=0, sticky="wesn", padx=15, pady=15)
-
 
         self.entry = customtkinter.CTkEntry(master=self.frame_info,
                                             width=120,
@@ -272,10 +273,11 @@ class App(customtkinter.CTk):
                 if user_answer:
                     self.autorun_file_directory = "/".join(self.file_path.split("/")[:-1])
                     custom_autorun_filename = self.entry.get()
+                    
                     if ' ' in custom_autorun_filename:
-                        custom_autorun_filename = custom_autorun_filename.replace('', '_')
-
-                    if custom_autorun_filename.endswith(('Your custom file name', '')):  # When user not set custom_autorun_filename we took filename from system 
+                        custom_autorun_filename = custom_autorun_filename.replace(' ', '_')
+                        
+                    if 'Your custom file name' == custom_autorun_filename or '' == custom_autorun_filename:  # When user not set custom_autorun_filename we took filename from system 
                         custom_autorun_filename = self.file_path.split('/')[-1]
 
                     match self.radio_var.get():
