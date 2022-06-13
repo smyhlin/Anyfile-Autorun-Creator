@@ -7,13 +7,16 @@ import tkinter
 import tkinter.messagebox
 from tkinter import ttk, filedialog, messagebox
 import customtkinter
+from pystray import MenuItem as item
+import pystray
+from PIL import Image, ImageTk
+
 
 #TODO: https://www.tutorialspoint.com/how-to-create-a-system-tray-icon-of-a-tkinter-application
-
 class App(customtkinter.CTk):
 
     WIDTH = 780
-    HEIGHT = 390
+    HEIGHT = 490
     USER_NAME = getpass.getuser()
     ps1 = """function jumpReg ($registryPath)
                         {
@@ -30,9 +33,9 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("Anyfile Autorun Creator")
-        app_path = getattr(sys, '_MEIPASS', os.getcwd())
-        self.iconbitmap(app_path+"/customtkinter/assets/icon.ico")
-        
+        self.app_path = getattr(sys, '_MEIPASS', os.getcwd())
+        self.iconbitmap(self.app_path+"/customtkinter/assets/icon.ico")
+
         self.centerWindow()
         self.resizable(False, False)
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
@@ -94,21 +97,26 @@ class App(customtkinter.CTk):
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_current_user)
         self.button_5.grid(row=6, column=0, pady=5, padx=20, sticky="we")
-        
+
         self.button_6 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="HKEY_CURRENT_USER\...\RunOnce",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_once_current_user)
         self.button_6.grid(row=7, column=0, pady=5, padx=20, sticky="we")
-        
+
         self.switch_1 = customtkinter.CTkSwitch(master=self.frame_left,
                                                 text="Auto-Replace spaces with '_'")
         self.switch_1.grid(row=10, column=0, pady=10, padx=20, sticky="w")
-        
+
         self.switch_2 = customtkinter.CTkSwitch(master=self.frame_left,
+                                                text="System Tray mode",
+                                                command=self.set_tray_mode)
+        self.switch_2.grid(row=11, column=0, pady=10, padx=20, sticky="w")
+
+        self.switch_3 = customtkinter.CTkSwitch(master=self.frame_left,
                                                 text="Dark Mode",
                                                 command=self.change_mode)
-        self.switch_2.grid(row=11, column=0, pady=10, padx=20, sticky="w")
+        self.switch_3.grid(row=12, column=0, pady=10, padx=20, sticky="w")
 
         #! ============ frame_right ============
 
@@ -119,7 +127,6 @@ class App(customtkinter.CTk):
         self.frame_right.columnconfigure(2, weight=0)
         self.frame_right.grid_rowconfigure(3, weight=100)  # empty row as spacing
 
-        
         self.frame_info = customtkinter.CTkFrame(master=self.frame_right)
         self.frame_info.grid(row=0, column=0, columnspan=2, rowspan=4, pady=20, padx=20, sticky="nsew")
 
@@ -182,7 +189,7 @@ class App(customtkinter.CTk):
         # set default values
         self.radio_button_1.select()
         self.switch_1.select()
-        self.switch_2.select()
+        self.switch_3.select()
 
     def centerWindow(self):
         sw = self.winfo_screenwidth()
@@ -191,12 +198,34 @@ class App(customtkinter.CTk):
         x = (sw - App.WIDTH) / 2
         y = (sh - App.HEIGHT) / 2
         self.geometry('%dx%d+%d+%d' % (App.WIDTH, App.HEIGHT, x, y))
-        
-    def button_event(self):
-        print("Button pressed")
+
+    def set_tray_mode(self):
+        if self.switch_2.get() == 1:
+            self.protocol("WM_DELETE_WINDOW", self.hide_window)  # call .hide_window() when app gets closed
+        else:
+            self.protocol("WM_DELETE_WINDOW", self.on_closing)  # call .on_closing() when app gets closed
+
+    # Define a function for quit the window
+    def quit_window(self, icon, item):
+        icon.stop()
+        self.destroy()
+
+    # Define a function to show the window again
+    def show_window(self, icon, item):
+        icon.stop()
+        self.after(0, self.deiconify())
+
+    # Hide the window and show on the system taskbar
+    def hide_window(self):
+        self.withdraw()
+        menu = (item('Show', self.show_window), item('Quit', self.quit_window))
+        image_path = self.app_path+"/customtkinter/assets/icon.ico"
+        image = Image.open(image_path)
+        icon = pystray.Icon("name", image, "Anyfile-Autorun-Creator", menu)
+        icon.run()
 
     def change_mode(self):
-        if self.switch_2.get() == 1:
+        if self.switch_3.get() == 1:
             customtkinter.set_appearance_mode("dark")
         else:
             customtkinter.set_appearance_mode("light")
@@ -273,20 +302,21 @@ class App(customtkinter.CTk):
                 if user_answer:
                     self.autorun_file_directory = "/".join(self.file_path.split("/")[:-1])
                     custom_autorun_filename = self.entry.get()
-                    
+
                     if ' ' in custom_autorun_filename:
                         custom_autorun_filename = custom_autorun_filename.replace(' ', '_')
-                        
+
                     if 'Your custom file name' == custom_autorun_filename or '' == custom_autorun_filename:  # When user not set custom_autorun_filename we took filename from system 
                         custom_autorun_filename = self.file_path.split('/')[-1]
 
-                    match self.radio_var.get():
-                        case 0:  # Autorun folder
-                            self.add_to_autorun_folder(custom_autorun_filename)
-                        case 1:  # Autorun sheduler
-                            self.add_to_task_sheduler(custom_autorun_filename)
-                        case 2:  # Autorun registry
-                            self.add_to_autorun_registry(custom_autorun_filename)
+                    if self.radio_var.get() == 0:
+                        # Autorun folder
+                        self.add_to_autorun_folder(custom_autorun_filename)
+                    elif self.radio_var.get() == 1:
+                        # Autorun sheduler
+                        self.add_to_task_sheduler(custom_autorun_filename)
+                    elif self.radio_var.get() == 2:
+                        self.add_to_autorun_registry(custom_autorun_filename)
         else:
             print('Not realized')
 
@@ -311,7 +341,7 @@ class App(customtkinter.CTk):
 
     def add_to_task_sheduler(self, autorun_filename):
         import win32com.client
-        
+
         # define constants
         scheduler = win32com.client.Dispatch('Schedule.Service')
         scheduler.Connect()
