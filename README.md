@@ -43,7 +43,7 @@ Next, you can run `autorun.py`
 
 Or build the .exe file with the following command:
 ```
-> pip install pyinstaller 
+> pip install pyinstaller
 > pyinstaller -F --onefile --noconsole ^
 --clean --icon="customtkinter\assets\icon.ico" ^
 --add-data=customtkinter;customtkinter "autorun.py"

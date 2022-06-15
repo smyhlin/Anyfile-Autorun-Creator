@@ -9,14 +9,13 @@ from tkinter import ttk, filedialog, messagebox
 import customtkinter
 from pystray import MenuItem as item
 import pystray
-from PIL import Image, ImageTk
+from PIL import Image
 
 
-#TODO: https://www.tutorialspoint.com/how-to-create-a-system-tray-icon-of-a-tkinter-application
 class App(customtkinter.CTk):
 
-    WIDTH = 780
-    HEIGHT = 490
+    WIDTH = 820
+    HEIGHT = 510
     USER_NAME = getpass.getuser()
     ps1 = """function jumpReg ($registryPath)
                         {
@@ -72,51 +71,73 @@ class App(customtkinter.CTk):
                                                 text="Autorun folder",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_windows_autorun_folder)
-        self.button_1.grid(row=2, column=0, pady=5, padx=20, sticky="we")
+        self.button_1.grid(row=2, column=0, pady=3, padx=20, sticky="we")
 
         self.button_2 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="Task Scheduler",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_task_sheduler)
-        self.button_2.grid(row=3, column=0, pady=5, padx=20, sticky="we")
+        self.button_2.grid(row=3, column=0, pady=3, padx=20, sticky="we")
 
         self.button_3 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="HKEY_LOCAL_MACHINE\...\Run",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_local_machine)
-        self.button_3.grid(row=4, column=0, pady=5, padx=20, sticky="we")
+        self.button_3.grid(row=4, column=0, pady=3, padx=20, sticky="we")
 
         self.button_4 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="HKEY_LOCAL_MACHINE\...\RunOnce",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_once_local_machine)
-        self.button_4.grid(row=5, column=0, pady=5, padx=20, sticky="we")
+        self.button_4.grid(row=5, column=0, pady=3, padx=20, sticky="we")
 
         self.button_5 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="HKEY_CURRENT_USER\...\Run",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_current_user)
-        self.button_5.grid(row=6, column=0, pady=5, padx=20, sticky="we")
+        self.button_5.grid(row=6, column=0, pady=3, padx=20, sticky="we")
 
         self.button_6 = customtkinter.CTkButton(master=self.frame_left,
                                                 text="HKEY_CURRENT_USER\...\RunOnce",
                                                 fg_color=("gray75", "gray30"),  # <- custom tuple-color
                                                 command=self.open_registry_run_once_current_user)
-        self.button_6.grid(row=7, column=0, pady=5, padx=20, sticky="we")
+        self.button_6.grid(row=7, column=0, pady=3, padx=20, sticky="we")
+
+        separator = ttk.Separator(self.frame_left, orient='horizontal')
+        separator.grid(row=9, column=0, pady=20, padx=20, sticky="we")
+
+        #! ============ self_autorun ============
+        file_path = os.path.realpath(__file__)
+        autorun_filename = file_path.split('\\')[-1]
+        self.app_autorun_path = rf'C:\Users\{self.USER_NAME}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{autorun_filename}_autorun.bat'
+        if not os.path.exists(self.app_autorun_path):
+            self.button_7 = customtkinter.CTkButton(master=self.frame_left,
+                                                    text="Add this app to autorun",
+                                                    command=self.add_app_to_autorun)
+            self.button_7.grid(row=10, column=0, padx=20, sticky="we")
+        else:
+            self.button_7 = customtkinter.CTkButton(master=self.frame_left,
+                                                    text="Remove this app from autorun",
+                                                    command=self.remove_app_from_autorun)
+            self.button_7.grid(row=10, column=0, padx=20, sticky="we")
+
+        separator = ttk.Separator(self.frame_left, orient='horizontal')
+        separator.grid(row=11, column=0, pady=22, padx=20, sticky="we")
+        #! ============ self_autorun ============
 
         self.switch_1 = customtkinter.CTkSwitch(master=self.frame_left,
                                                 text="Auto-Replace spaces with '_'")
-        self.switch_1.grid(row=10, column=0, pady=10, padx=20, sticky="w")
+        self.switch_1.grid(row=14, column=0, pady=3, padx=20, sticky="w")
 
         self.switch_2 = customtkinter.CTkSwitch(master=self.frame_left,
                                                 text="System Tray mode",
                                                 command=self.set_tray_mode)
-        self.switch_2.grid(row=11, column=0, pady=10, padx=20, sticky="w")
+        self.switch_2.grid(row=15, column=0, pady=3, padx=20, sticky="w")
 
         self.switch_3 = customtkinter.CTkSwitch(master=self.frame_left,
                                                 text="Dark Mode",
                                                 command=self.change_mode)
-        self.switch_3.grid(row=12, column=0, pady=10, padx=20, sticky="w")
+        self.switch_3.grid(row=16, column=0, pady=3, padx=20, sticky="w")
 
         #! ============ frame_right ============
 
@@ -199,6 +220,21 @@ class App(customtkinter.CTk):
         y = (sh - App.HEIGHT) / 2
         self.geometry('%dx%d+%d+%d' % (App.WIDTH, App.HEIGHT, x, y))
 
+    #TODO: update interfaces function
+    def add_app_to_autorun(self):
+        self.file_path = os.path.realpath(__file__)
+
+        if ' ' in self.file_path:  # Check for spaces in file name and replace with '_'
+            self.remove_spaces_from_filename()
+        self.autorun_file_directory = "/".join(self.file_path.split("\\")[:-1])
+        custom_autorun_filename = self.file_path.split('\\')[-1]
+
+        self.add_to_autorun_folder(custom_autorun_filename)
+
+    def remove_app_from_autorun(self):
+        os.remove(self.app_autorun_path)
+        self.update()
+
     def set_tray_mode(self):
         if self.switch_2.get() == 1:
             self.protocol("WM_DELETE_WINDOW", self.hide_window)  # call .hide_window() when app gets closed
@@ -236,7 +272,7 @@ class App(customtkinter.CTk):
             self.file_path = self.file_path.replace(' ', '_')
             return True
         else:
-            messagebox.showinfo('To Do:', 
+            messagebox.showinfo('To Do:',
                                 'Enable Auto-Rename switch\n'
                                 'OR Chose another file!'
                                 '\n\n CMD won`t work with spaces in file name')
